@@ -11,5 +11,16 @@ export default defineConfig(
     connectTimeout: 3 * 60 * 1000, // 3 minutes
     os: ServiceOS.LINUX,
     credential: new DefaultAzureCredential(),
-  })
+  }),
+  {
+    /*
+    Enable Playwright Workspaces Reporter:
+    Upload test results and reports to Playwright Workspaces.
+    The HTML reporter must be included before Playwright Workspaces Reporter.
+    */
+    reporter: [
+      ["html", { open: "never" }],
+      ["@azure/playwright/reporter"],
+    ],
+  }
 );
