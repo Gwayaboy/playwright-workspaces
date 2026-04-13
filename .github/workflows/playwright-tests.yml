@@ -43,8 +43,24 @@ jobs:
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Run Playwright tests
+      id: playwright-tests
       working-directory: samples/playwright-tests
-      run: npx playwright test --config=playwright.service.config.ts --workers=20
+      run: |
+        npx playwright test --config=playwright.service.config.ts --workers=20 2>&1 | tee test-output.log
+        REPORT_URL=$(grep -oP 'Published report URL: \K.*' test-output.log || echo "")
+        if [ -n "$REPORT_URL" ]; then
+          echo "report_url=$REPORT_URL" >> $GITHUB_OUTPUT
+          echo "✅ Tests completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **View Test Results in Azure Portal:**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[$REPORT_URL]($REPORT_URL)" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Display Report URL
+      if: steps.playwright-tests.outputs.report_url
+      run: |
+        echo "::notice title=Test Report Published::View results at: ${{ steps.playwright-tests.outputs.report_url }}"
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
